@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 LED Control</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        button { font-size: 20px; padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #status { font-size: 18px; margin-top: 20px; color: #333; }
+    </style>
+</head>
+<body>
+
+    <h1>ESP32 LED Control</h1>
+    <button onclick="sendCommand('ON')">Turn LED ON</button>
+    <button onclick="sendCommand('OFF')">Turn LED OFF</button>
+    <p id="status">Status: Connecting...</p>
+
+    <script>
+        const serverURL = "ws://3.26.19.121:8080";  
+        let ws; // Declare globally
+
+        function connectWebSocket() {
+            ws = new WebSocket(serverURL);
+
+            ws.onopen = () => {
+                document.getElementById("status").innerText = "Status: Connected ✅";
+                console.log("✅ Connected to WebSocket Server");
+            };
+
+            ws.onmessage = (event) => {
+                console.log("📩 Received:", event.data);
+                alert("ESP32 says: " + event.data);
+            };
+
+            ws.onerror = (error) => {
+                console.error("❌ WebSocket Error:", error);
+                document.getElementById("status").innerText = "Status: Error ❌";
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").innerText = "⚠️ WebSocket Disconnected. Attempting Reconnect...";
+                console.log("⚠️ WebSocket Disconnected. Attempting Reconnect...");
+                setTimeout(connectWebSocket, 5000); // Reconnect in 5 sec
+            };
+        }
+
+        function sendCommand(command) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = JSON.stringify({ message: command });
+                ws.send(message);
+                console.log("🚀 Sent:", message);
+            } else {
+                alert("❌ WebSocket Not Connected!");
+            }
+        }
+
+        connectWebSocket(); // Initialize WebSocket
+    </script>
+
+</body>
+</html>
